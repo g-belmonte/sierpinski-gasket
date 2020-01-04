@@ -1,14 +1,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <bits/types/FILE.h>
-#include <cstdlib>
 #include <glm/vec2.hpp>
 
-#include <cstdio>
 #include <iostream>
 
 // Window dimentions
-const GLint WIDTH = 800, HEIGHT = 600;
+const GLint WIDTH = 800, HEIGHT = 800;
 // Number of points used to draw the Sierpinski gasket
 const int POINTS = 10000;
 
@@ -53,6 +50,7 @@ GLuint createProgram(const char *vertexShaderFile, const char *fragmentShaderFil
     }
 
     GLuint shader = glCreateShader(s.type);
+    glShaderSource(shader, 1, (const GLchar**) &s.source, NULL);
     glCompileShader(shader);
 
     GLint compiled;
@@ -97,7 +95,7 @@ GLuint createProgram(const char *vertexShaderFile, const char *fragmentShaderFil
 int main() {
   // Initialize GLFW
   if (!glfwInit()) {
-    std::cout << "GLFW initialisation failed";
+    std::cerr << "GLFW initialisation failed" << std::endl;
     glfwTerminate();
     return 1;
   }
@@ -115,7 +113,7 @@ int main() {
       glfwCreateWindow(WIDTH, HEIGHT, "Test window", NULL, NULL);
 
   if (!mainWindow) {
-    std::cout << "GLFW window creation failed!";
+    std::cerr << "GLFW window creation failed!" << std::endl;
     glfwTerminate();
     return 1;
   }
@@ -146,7 +144,6 @@ int main() {
     glfwPollEvents();
 
     // Clear window
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glfwSwapBuffers(mainWindow);

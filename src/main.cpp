@@ -1,13 +1,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/vec2.hpp>
+#include <stdio.h>
+#include <string.h>
 
-#include <iostream>
+// Window dimensions
+const GLint WIDTH = 800, HEIGHT = 600;
 
-// Window dimentions
-const GLint WIDTH = 800, HEIGHT = 800;
-// Number of points used to draw the Sierpinski gasket
-const int POINTS = 10000;
+GLuint VAO, VBO, shader;
 
 static char *readShaderSource(const char *shaderFile) {
   FILE *pFile = fopen(shaderFile, "rb");
@@ -28,74 +27,84 @@ static char *readShaderSource(const char *shaderFile) {
   return buf;
 }
 
-// Create a GLSL program from shaders
-GLuint createProgram(const char *vertexShaderFile, const char *fragmentShaderFile) {
-  struct Shader {
-    const char *filename;
-    GLenum      type;
-    GLchar     *source;
-  } shaders[2] = {
-    {vertexShaderFile, GL_VERTEX_SHADER, NULL},
-    {fragmentShaderFile, GL_FRAGMENT_SHADER, NULL}
-  };
+void createTriangle() {
+  GLfloat vertices[] = {-1.0f, -1.0f, 0.0f,
+                         1.0f, -1.0f, 0.0f,
+                         0.0f,  1.0f, 0.0f};
 
-  GLuint program = glCreateProgram();
+  // binding
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
 
-  for(int i = 0; i < 2; ++i) {
-    Shader& s = shaders[i];
-    s.source = readShaderSource(s.filename);
-    if (shaders[i].source == NULL) {
-      std::cerr << "Failed to read " << s.filename << std::endl;
-      exit(EXIT_FAILURE);
-    }
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    GLuint shader = glCreateShader(s.type);
-    glShaderSource(shader, 1, (const GLchar**) &s.source, NULL);
-    glCompileShader(shader);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
 
-    GLint compiled;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-    if(!compiled) {
-      std::cerr << s.filename << " failed to compile" << std::endl;
-      GLint logLength;
-      glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
-      char *logMsg = new char[logLength];
-      glGetShaderInfoLog(shader, logLength, NULL, logMsg);
-      std::cerr << logMsg << std::endl;
-      delete[] logMsg;
+  // unbinding
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+}
 
-      exit(EXIT_FAILURE);
-    }
+void addShader(GLuint theProgram, const char *shaderFile, GLenum shaderType) {
+  GLuint theShader = glCreateShader(shaderType);
 
-    delete[] s.source;
-    glAttachShader(program, shader);
+  const GLchar *theCode[1];
+  theCode[0] = readShaderSource(shaderFile);
+
+  glShaderSource(theShader, 1, theCode, NULL);
+  glCompileShader(theShader);
+
+  GLint result = 0;
+  GLchar eLog[1024] = {0};
+
+  glGetShaderiv(theShader, GL_COMPILE_STATUS, &result);
+  if (!result) {
+    glGetShaderInfoLog(theShader, sizeof(eLog), NULL, eLog);
+    printf("Error compiling the %d shader: '%s'\n", shaderType, eLog);
+    return;
   }
 
-  glLinkProgram(program);
+  glAttachShader(theProgram, theShader);
+}
 
-  GLint linked;
-  glGetProgramiv(program, GL_LINK_STATUS, &linked);
-  if (!linked) {
-    std::cerr << "Shader program failed to link" << std::endl;
-    GLint logLength;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-    char *logMsg = new char[logLength];
-    glGetProgramInfoLog(program, logLength, NULL, logMsg);
-    std::cerr << logMsg << std::endl;
-    delete[] logMsg;
+void compileShaders() {
+  shader = glCreateProgram();
 
-    exit(EXIT_FAILURE);
+  if (!shader) {
+    printf("Error creating shader program!");
+    return;
   }
 
-  glUseProgram(program);
+  addShader(shader, "vshader.glsl", GL_VERTEX_SHADER);
+  addShader(shader, "fshader.glsl", GL_FRAGMENT_SHADER);
 
-  return program;
+  GLint result = 0;
+  GLchar eLog[1024] = { 0 };
+
+  glLinkProgram(shader);
+  glGetProgramiv(shader, GL_LINK_STATUS, &result);
+  if (!result) {
+    glGetProgramInfoLog(shader, sizeof(eLog), NULL, eLog);
+    printf("Error linking program: '%s'\n", eLog);
+    return;
+  }
+
+  glValidateProgram(shader);
+  glGetProgramiv(shader, GL_VALIDATE_STATUS, &result);
+  if (!result) {
+    glGetProgramInfoLog(shader, sizeof(eLog), NULL, eLog);
+    printf("Error validating program: '%s'\n", eLog);
+    return;
+  }
 }
 
 int main() {
-  // Initialize GLFW
+  // Initialise GLFW
   if (!glfwInit()) {
-    std::cerr << "GLFW initialisation failed" << std::endl;
+    printf("GLFW initialisation failed!");
     glfwTerminate();
     return 1;
   }
@@ -111,9 +120,8 @@ int main() {
 
   GLFWwindow *mainWindow =
       glfwCreateWindow(WIDTH, HEIGHT, "Test window", NULL, NULL);
-
   if (!mainWindow) {
-    std::cerr << "GLFW window creation failed!" << std::endl;
+    printf("GLFW window creation failed!");
     glfwTerminate();
     return 1;
   }
@@ -129,7 +137,7 @@ int main() {
   glewExperimental = GL_TRUE;
 
   if (glewInit() != GLEW_OK) {
-    std::cout << "GLEW initialisation failed!";
+    printf("GLEW initialisation failed!");
     glfwDestroyWindow(mainWindow);
     glfwTerminate();
     return 1;
@@ -138,13 +146,27 @@ int main() {
   // Setup Viewport size
   glViewport(0, 0, bufferWidth, bufferHeight);
 
+  createTriangle();
+  compileShaders();
+
   // Loop until window closed
   while (!glfwWindowShouldClose(mainWindow)) {
     // Get + Handle user input events
     glfwPollEvents();
 
     // Clear window
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    // bind
+    glUseProgram(shader);
+    glBindVertexArray(VAO);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // unbind
+    glBindVertexArray(0);
+    glUseProgram(0);
 
     glfwSwapBuffers(mainWindow);
   }

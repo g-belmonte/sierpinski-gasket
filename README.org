@@ -1,2 +1,7 @@
 #+title: Sierpinski gasket
-* Hello world
+* Installing
+  First make sure to have OpenGL, glew, glfw and glm installed on the system. E.g.: on Archlinux:
+  ~$ sudo pacman -S glew-wayland glfw-wayland glm~
+
+  Then:
+  ~$ cd src/ && make && ./main~

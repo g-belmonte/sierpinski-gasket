@@ -3,6 +3,8 @@
 #include <glm/vec3.hpp>
 #include <stdio.h>
 #include <string.h>
+#include <list>
+#include <cmath>
 
 // Triangle class.
 // TODO: Move this class to its own file
@@ -22,6 +24,11 @@ Triangle::Triangle(GLfloat vs[]){
 const GLint WIDTH = 800, HEIGHT = 600;
 
 GLuint VAO, VBO, shader;
+
+// TODO: change iterations number on user input
+// This number must be lesser then 10
+// otherwise segmentation fault will occur
+short ITERATIONS = 8;
 
 static char *readShaderSource(const char *shaderFile) {
   FILE *pFile = fopen(shaderFile, "rb");
@@ -47,13 +54,59 @@ void createTriangle() {
                          1.0f, -1.0f, 0.0f,
                          0.0f,  1.0f, 0.0f};
 
+  Triangle t(vertices);
+  std::list<Triangle> lt;
+  lt.push_back(t);
+
+  // subdivide triangle
+  for (int i = 0; i < ITERATIONS; ++i){
+    short s = lt.size();
+
+    for (int j = 0; j < s; ++j){
+      glm::vec3 p12 = (lt.front().p1 + lt.front().p2) / 2.0f;
+      glm::vec3 p13 = (lt.front().p1 + lt.front().p3) / 2.0f;
+      glm::vec3 p23 = (lt.front().p2 + lt.front().p3) / 2.0f;
+
+      GLfloat t1[] = {lt.front().p1.x, lt.front().p1.y, lt.front().p1.z,
+                      p12.x, p12.y, p12.z,
+                      p13.x, p13.y, p13.z};
+      GLfloat t2[] = {p12.x, p12.y, p12.z,
+                      lt.front().p2.x, lt.front().p2.y, lt.front().p2.z,
+                      p23.x, p23.y, p23.z};
+      GLfloat t3[] = {p13.x, p13.y, p13.z,
+                      p23.x, p23.y, p23.z,
+                      lt.front().p3.x, lt.front().p3.y, lt.front().p3.z};
+
+      lt.push_back(Triangle(t1));
+      lt.push_back(Triangle(t2));
+      lt.push_back(Triangle(t3));
+      lt.pop_front();
+    }
+  }
+
+  // transform triangle vector in an array
+  short listSize = lt.size();
+  GLfloat vertexArray[listSize * 9];
+  for (int i = 0; i < listSize; ++i){
+    vertexArray[i * 9 + 0] = lt.front().p1.x;
+    vertexArray[i * 9 + 1] = lt.front().p1.y;
+    vertexArray[i * 9 + 2] = lt.front().p1.z;
+    vertexArray[i * 9 + 3] = lt.front().p2.x;
+    vertexArray[i * 9 + 4] = lt.front().p2.y;
+    vertexArray[i * 9 + 5] = lt.front().p2.z;
+    vertexArray[i * 9 + 6] = lt.front().p3.x;
+    vertexArray[i * 9 + 7] = lt.front().p3.y;
+    vertexArray[i * 9 + 8] = lt.front().p3.z;
+    lt.pop_front();
+  }
+
   // binding
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexArray), vertexArray, GL_STATIC_DRAW);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
@@ -177,7 +230,7 @@ int main() {
     glUseProgram(shader);
     glBindVertexArray(VAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, std::pow(3, ITERATIONS + 1));
 
     // unbind
     glBindVertexArray(0);

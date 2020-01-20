@@ -1,7 +1,22 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/vec3.hpp>
 #include <stdio.h>
 #include <string.h>
+
+// Triangle class.
+// TODO: Move this class to its own file
+class Triangle {
+public:
+  Triangle(GLfloat vs[]);
+  glm::vec3 p1, p2, p3;
+};
+
+Triangle::Triangle(GLfloat vs[]){
+  this->p1 = glm::vec3(vs[0], vs[1], vs[2]);
+  this->p2 = glm::vec3(vs[3], vs[4], vs[5]);
+  this->p3 = glm::vec3(vs[6], vs[7], vs[8]);
+}
 
 // Window dimensions
 const GLint WIDTH = 800, HEIGHT = 600;

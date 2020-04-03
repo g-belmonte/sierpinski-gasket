@@ -8,3 +8,5 @@
 
   ~$ cd src/ && make && ./main~
  
+ #+CAPTION: screenshot
+[[./screenshot.jpg]]

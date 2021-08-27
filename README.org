@@ -3,13 +3,25 @@
   First make sure to have OpenGL, glew, glfw and glm installed on the system. E.g.: on Archlinux:
 
   #+BEGIN_SRC shell
-  $ sudo pacman -S glew-wayland glfw-wayland glm
+  $ sudo pacman -S glew glfw glm
   #+END_SRC
 
-  Then:
+  build:
 
   #+BEGIN_SRC shell
-  $ make && ./sierpinski
+  $ make
+  #+END_SRC
+
+  run executable:
+
+  #+BEGIN_SRC shell
+  $ make run
+  #+END_SRC
+
+  clean project:
+
+  #+BEGIN_SRC shell
+  $ make clean
   #+END_SRC
 
  #+CAPTION: screenshot

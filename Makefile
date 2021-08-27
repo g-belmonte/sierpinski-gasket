@@ -1,22 +1,28 @@
-src = $(wildcard src/*.cpp)
-obj = $(src:.cpp=.o)
-dep = $(obj:.o=.d)
+TARGET_EXEC := sierpinski
+
+BUILD_DIR := build
+SRC_DIR := src
+
+SRC := $(wildcard $(SRC_DIR)/*.cpp)
+OBJ := $(SRC:%.cpp=$(BUILD_DIR)/%.o)
+DEP := $(OBJ:%.o=%.d)
 
 CXXFLAGS = -Wall -g -MMD
 LDFLAGS = -lglfw -lGLEW -lGL
 
-sierpinski: $(obj)
-		$(CXX) -o $@ $^ $(LDFLAGS)
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJ)
+		$(CXX) $(OBJ) -o $@ $(LDFLAGS)
 
--include $(dep)
+$(BUILD_DIR)/%.o: %.cpp
+		[[ -d $(dir $@) ]] || mkdir -p $(dir $@)
+		$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
-		$(RM) sierpinski $(obj)
+		$(RM) -r $(BUILD_DIR)
 
-.PHONY: clean-dep
-clean-dep:
-		$(RM) $(dep)
+.PHONY: run
+run: $(BUILD_DIR)/$(TARGET_EXEC)
+		./$(BUILD_DIR)/$(TARGET_EXEC)
 
-.PHONY: clean-all
-clean-all: clean clean-dep
+-include $(DEP)

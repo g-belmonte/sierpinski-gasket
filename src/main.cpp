@@ -146,8 +146,8 @@ void compileShaders() {
     return;
   }
 
-  addShader(shader, "src/vshader.glsl", GL_VERTEX_SHADER);
-  addShader(shader, "src/fshader.glsl", GL_FRAGMENT_SHADER);
+  addShader(shader, "shaders/basic.vs", GL_VERTEX_SHADER);
+  addShader(shader, "shaders/basic.fs", GL_FRAGMENT_SHADER);
 
   GLint result = 0;
   GLchar eLog[1024] = { 0 };

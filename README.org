@@ -24,5 +24,11 @@
   $ make clean
   #+END_SRC
 
+  commands:
+
+  - Press ESC to quit
+  - Press UP ARROW to increase triangle divisions
+  - Press DOWN ARROW to dencrease triangle divisions
+
  #+CAPTION: screenshot
 [[./screenshot.jpg]]

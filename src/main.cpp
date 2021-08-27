@@ -7,7 +7,6 @@
 #include <cmath>
 
 // Triangle class.
-// TODO: Move this class to its own file
 class Triangle {
 public:
   Triangle(GLfloat vs[]);
@@ -25,10 +24,8 @@ const GLint WIDTH = 800, HEIGHT = 600;
 
 GLuint VAO, VBO, shader;
 
-// TODO: change iterations number on user input
-// This number must be lesser then 10
-// otherwise segmentation fault will occur
-short ITERATIONS = 8;
+short iterations = 8;
+bool updateIter = false;
 
 static char *readShaderSource(const char *shaderFile) {
   FILE *pFile = fopen(shaderFile, "rb");
@@ -59,7 +56,7 @@ void createTriangle() {
   lt.push_back(t);
 
   // subdivide triangle
-  for (int i = 0; i < ITERATIONS; ++i){
+  for (int i = 0; i < iterations; ++i){
     short s = lt.size();
 
     for (int j = 0; j < s; ++j){
@@ -169,6 +166,28 @@ void compileShaders() {
   }
 }
 
+void updateKeyboard(GLFWwindow *window, int key, int scancode, int action,
+                    int mods) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+
+    if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+        if (iterations < 9) { // greater number of iterations cause segmentation fault
+          iterations++;
+          updateIter = true;
+        }
+    }
+
+    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+        if (iterations > 1) {
+          iterations--;
+          updateIter = true;
+        }
+    }
+}
+
+
 int main() {
   // Initialise GLFW
   if (!glfwInit()) {
@@ -200,6 +219,7 @@ int main() {
 
   // Set context for GLEW to use
   glfwMakeContextCurrent(mainWindow);
+  glfwSetKeyCallback(mainWindow, updateKeyboard);
 
   // Allow modern extension features
   glewExperimental = GL_TRUE;
@@ -222,6 +242,11 @@ int main() {
     // Get + Handle user input events
     glfwPollEvents();
 
+    if (updateIter) {
+      createTriangle();
+      updateIter = false;
+    }
+
     // Clear window
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -230,7 +255,7 @@ int main() {
     glUseProgram(shader);
     glBindVertexArray(VAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, std::pow(3, ITERATIONS + 1));
+    glDrawArrays(GL_TRIANGLES, 0, std::pow(3, iterations + 1));
 
     // unbind
     glBindVertexArray(0);

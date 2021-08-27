@@ -1,8 +1,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include <list>
 #include <cmath>
 
@@ -27,23 +28,22 @@ GLuint VAO, VBO, shader;
 short iterations = 8;
 bool updateIter = false;
 
-static char *readShaderSource(const char *shaderFile) {
-  FILE *pFile = fopen(shaderFile, "rb");
+std::string readShaderSource(const char *shaderFile) {
+  std::string shaderCode;
+  std::ifstream file(shaderFile, std::ios::in);
 
-  if (pFile == NULL) {
-    return NULL;
+  if (!file.good()) {
+    std::cout << "Can't read file " << shaderFile << std::endl;
+    std::terminate();
   }
+  
+  file.seekg(0, std::ios::end);
+  shaderCode.resize((unsigned int)file.tellg());
+  file.seekg(0, std::ios::beg);
+  file.read(&shaderCode[0], shaderCode.size());
+  file.close();
 
-  fseek(pFile, 0L, SEEK_END);
-  long size = ftell(pFile);
-
-  rewind(pFile);
-  char *buf = new char[size + 1];
-  fread(buf, 1, size, pFile);
-  buf[size] = '\0';
-  fclose(pFile);
-
-  return buf;
+  return shaderCode;
 }
 
 void createTriangle() {
@@ -116,10 +116,11 @@ void createTriangle() {
 void addShader(GLuint theProgram, const char *shaderFile, GLenum shaderType) {
   GLuint theShader = glCreateShader(shaderType);
 
-  const GLchar *theCode[1];
-  theCode[0] = readShaderSource(shaderFile);
+  std::string source = readShaderSource(shaderFile);
+  const char* shader_code_ptr = source.c_str();
+  const int shader_code_size = source.size();
 
-  glShaderSource(theShader, 1, theCode, NULL);
+  glShaderSource(theShader, 1, &shader_code_ptr, &shader_code_size);
   glCompileShader(theShader);
 
   GLint result = 0;
